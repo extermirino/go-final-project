@@ -141,7 +141,9 @@ func nextMonthday(date time.Time, now time.Time, daysPart string, monthsPart str
 		if err != nil || day < -2 || day > 31 {
 			return time.Time{}, errors.New("invalid day")
 		}
-		dayArr[day] = true
+		if day > 0 {
+			dayArr[day] = true
+		}
 	}
 
 	if len(monthsPart) != 0 {
