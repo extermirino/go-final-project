@@ -21,7 +21,7 @@ func nextDayHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		now, err = time.Parse("20060102", nowStr)
 		if err != nil {
-			http.Error(w, "invalid now", http.StatusBadRequest)
+			http.Error(w, "invalid \"now\"", http.StatusBadRequest)
 			return
 		}
 	}
