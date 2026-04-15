@@ -42,7 +42,7 @@ func Tasks(limit int, search string) ([]Task, error) {
 			like := "%" + search + "%"
 			query = fmt.Sprintf(`SELECT * FROM scheduler WHERE title LIKE '%s' OR comment LIKE '%s' ORDER BY date ASC LIMIT %d`, like, like, limit)
 		}
-		
+
 	} else {
 		query = fmt.Sprintf(`SELECT * FROM scheduler ORDER BY date ASC LIMIT %d`, limit)
 	}
@@ -64,4 +64,37 @@ func Tasks(limit int, search string) ([]Task, error) {
 	}
 
 	return tasks, nil
+}
+
+func GetTask(id string) (*Task, error) {
+	task := &Task{}
+
+	query := fmt.Sprintf(`SELECT * FROM scheduler WHERE id = '%s'`, id)
+	row := db.QueryRow(query)
+	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+	if err != nil {
+		return nil, err
+	}
+
+	return task, nil
+}
+
+func UpdateTask(task *Task) error {
+	query := fmt.Sprintf(`UPDATE scheduler SET date = '%s', title = '%s', comment = '%s', repeat = '%s' WHERE id = '%s'`, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
+
+	res, err := db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return fmt.Errorf(`incorrect id for updating task`)
+	}
+
+	return nil
 }

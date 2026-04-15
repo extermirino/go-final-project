@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -14,32 +15,24 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
-		writeJson(w, map[string]string{
-			"error": "invalid json",
-		})
+		writeError(w, errors.New("invalid json"))
 		return
 	}
 
 	if task.Title == "" {
-		writeJson(w, map[string]string{
-			"error": "title is empty",
-		})
+		writeError(w, errors.New("title is empty"))
 		return
 	}
 
 	err = checkDate(&task)
 	if err != nil {
-		writeJson(w, map[string]string{
-			"error": err.Error(),
-		})
+		writeError(w, err)
 		return
 	}
 
 	id, err := db.AddTask(&task)
 	if err != nil {
-		writeJson(w, map[string]string{
-			"error": "db error",
-		})
+		writeError(w, errors.New("db error"))
 		return
 	}
 
