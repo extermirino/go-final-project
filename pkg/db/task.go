@@ -69,7 +69,7 @@ func Tasks(limit int, search string) ([]Task, error) {
 func GetTask(id string) (*Task, error) {
 	task := &Task{}
 
-	query := fmt.Sprintf(`SELECT * FROM scheduler WHERE id = '%s'`, id)
+	query := fmt.Sprintf(`SELECT * FROM scheduler WHERE id = %s`, id)
 	row := db.QueryRow(query)
 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
@@ -80,7 +80,38 @@ func GetTask(id string) (*Task, error) {
 }
 
 func UpdateTask(task *Task) error {
-	query := fmt.Sprintf(`UPDATE scheduler SET date = '%s', title = '%s', comment = '%s', repeat = '%s' WHERE id = '%s'`, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
+	query := fmt.Sprintf(`UPDATE scheduler SET date = '%s', title = '%s', comment = '%s', repeat = '%s' WHERE id = %s`, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
+
+	res, err := db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return fmt.Errorf(`incorrect id for updating task`)
+	}
+
+	return nil
+}
+
+func DeleteTask(id string) error {
+	query := fmt.Sprintf(`DELETE FROM scheduler WHERE id = %s`, id)
+
+	_, err := db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UpdateDate(date string, id string) error {
+	query := fmt.Sprintf(`UPDATE scheduler SET date = '%s' WHERE id = %s`, date, id)
 
 	res, err := db.Exec(query)
 	if err != nil {

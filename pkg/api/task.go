@@ -1,6 +1,9 @@
 package api
 
-import "net/http"
+import (
+	"errors"
+	"net/http"
+)
 
 func taskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
@@ -10,8 +13,10 @@ func taskHandler(w http.ResponseWriter, r *http.Request) {
 		getTask(w, r)
 	case http.MethodPut:
 		updateTask(w, r)
+	case http.MethodDelete:
+		deleteTask(w, r)
 
 	default:
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		writeError(w, errors.New("method not allowed"))
 	}
 }
