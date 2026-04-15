@@ -14,14 +14,14 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&task)
 	if err != nil {
-		writeJSON(w, map[string]string{
+		writeJson(w, map[string]string{
 			"error": "invalid json",
 		})
 		return
 	}
 
 	if task.Title == "" {
-		writeJSON(w, map[string]string{
+		writeJson(w, map[string]string{
 			"error": "title is empty",
 		})
 		return
@@ -29,7 +29,7 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 
 	err = checkDate(&task)
 	if err != nil {
-		writeJSON(w, map[string]string{
+		writeJson(w, map[string]string{
 			"error": err.Error(),
 		})
 		return
@@ -37,13 +37,13 @@ func addTask(w http.ResponseWriter, r *http.Request) {
 
 	id, err := db.AddTask(&task)
 	if err != nil {
-		writeJSON(w, map[string]string{
+		writeJson(w, map[string]string{
 			"error": "db error",
 		})
 		return
 	}
 
-	writeJSON(w, map[string]string{
+	writeJson(w, map[string]string{
 		"id": fmt.Sprint(id),
 	})
 }
