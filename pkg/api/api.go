@@ -5,11 +5,14 @@ import (
 	"net/http"
 )
 
+var jwtSecret = []byte("super_secret_key")
+
 func Init() {
 	http.HandleFunc("/api/nextdate", nextDayHandler)
-	http.HandleFunc("/api/task", taskHandler)
-	http.HandleFunc("/api/task/done", doneTask)
-	http.HandleFunc("/api/tasks", tasksHandler)
+	http.HandleFunc("/api/task", auth(taskHandler))
+	http.HandleFunc("/api/task/done", auth(doneTask))
+	http.HandleFunc("/api/tasks", auth(tasksHandler))
+	http.HandleFunc("/api/signin", signInHandler)
 }
 
 func writeJson(w http.ResponseWriter, data any) {
