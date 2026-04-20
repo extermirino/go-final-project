@@ -5,6 +5,17 @@ import (
 	"time"
 )
 
+const (
+	queryGetTask    = `SELECT id, date, title, comment, repeat FROM scheduler WHERE id = ?`
+	queryDeleteTask = `DELETE FROM scheduler WHERE id = ?`
+	queryUpdateDate = `UPDATE scheduler SET date = ? WHERE id = ?`
+	queryUpdateTask = `UPDATE scheduler SET date = ?, title = ?, comment = ?, repeat = ? WHERE id = ?`
+
+	queryTasksAll      = `SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date ASC LIMIT ?`
+	queryTasksByDate   = `SELECT id, date, title, comment, repeat FROM scheduler WHERE date = ? ORDER BY date ASC LIMIT ?`
+	queryTasksBySearch = `SELECT id, date, title, comment, repeat FROM scheduler WHERE title LIKE ? OR comment LIKE ? ORDER BY date ASC LIMIT ?`
+)
+
 type Task struct {
 	ID      string `json:"id"`
 	Date    string `json:"date"`
@@ -31,23 +42,9 @@ func AddTask(task *Task) (int64, error) {
 }
 
 func Tasks(limit int, search string) ([]Task, error) {
-	var query string
-	if search != "" {
-		t, err := time.Parse("02.01.2006", search)
+	query, args := buildTasksQuery(limit, search)
 
-		if err == nil {
-			date := t.Format("20060102")
-			query = fmt.Sprintf(`SELECT * FROM scheduler WHERE date = '%s' ORDER BY date ASC LIMIT %d`, date, limit)
-		} else {
-			like := "%" + search + "%"
-			query = fmt.Sprintf(`SELECT * FROM scheduler WHERE title LIKE '%s' OR comment LIKE '%s' ORDER BY date ASC LIMIT %d`, like, like, limit)
-		}
-
-	} else {
-		query = fmt.Sprintf(`SELECT * FROM scheduler ORDER BY date ASC LIMIT %d`, limit)
-	}
-
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,11 +63,23 @@ func Tasks(limit int, search string) ([]Task, error) {
 	return tasks, nil
 }
 
+func buildTasksQuery(limit int, search string) (string, []any) {
+	if search == "" {
+		return queryTasksAll, []any{limit}
+	}
+
+	if t, err := time.Parse("02.01.2006", search); err == nil {
+		return queryTasksByDate, []any{t.Format("20060102"), limit}
+	}
+
+	like := "%" + search + "%"
+	return queryTasksBySearch, []any{like, like, limit}
+}
+
 func GetTask(id string) (*Task, error) {
 	task := &Task{}
 
-	query := fmt.Sprintf(`SELECT * FROM scheduler WHERE id = %s`, id)
-	row := db.QueryRow(query)
+	row := db.QueryRow(queryGetTask, id)
 	err := row.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
 		return nil, err
@@ -80,9 +89,7 @@ func GetTask(id string) (*Task, error) {
 }
 
 func UpdateTask(task *Task) error {
-	query := fmt.Sprintf(`UPDATE scheduler SET date = '%s', title = '%s', comment = '%s', repeat = '%s' WHERE id = %s`, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
-
-	res, err := db.Exec(query)
+	res, err := db.Exec(queryUpdateTask, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
 	if err != nil {
 		return err
 	}
@@ -100,9 +107,7 @@ func UpdateTask(task *Task) error {
 }
 
 func DeleteTask(id string) error {
-	query := fmt.Sprintf(`DELETE FROM scheduler WHERE id = %s`, id)
-
-	_, err := db.Exec(query)
+	_, err := db.Exec(queryDeleteTask, id)
 	if err != nil {
 		return err
 	}
@@ -111,9 +116,7 @@ func DeleteTask(id string) error {
 }
 
 func UpdateDate(date string, id string) error {
-	query := fmt.Sprintf(`UPDATE scheduler SET date = '%s' WHERE id = %s`, date, id)
-
-	res, err := db.Exec(query)
+	res, err := db.Exec(queryUpdateDate, date, id)
 	if err != nil {
 		return err
 	}
